@@ -2,9 +2,9 @@
 
 This document must be updated daily every time you finish a work session.
 
-## Amy Smith  (CHANGE THIS!!!!! Also change the file name!)
+## Ethan Lin
 
-### 2024-01-02 - Brief description
+### 2024-01-06 - Brief description
 Expanded description including how much time was spent on task.
 
 ### 2024-01-03 - Brief description
