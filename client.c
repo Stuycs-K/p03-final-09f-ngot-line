@@ -6,20 +6,19 @@ void clientLogic(int server_socket){
 
   // quit if fgets() returns null (ctrl-d or eof)
   while (printf("Enter a message: "), fgets(buffer, sizeof(buffer), stdin)) {
-      // Remove the trailing newline from fgets
+
       char *p = strchr(buffer, '\n');
       if (p) *p = 0;
 
-      // Send the message to the server
-      // We use sizeof(buffer) or strlen(buffer) + 1 to include the null terminator
+      // Send the msg to the server
+      // We use sizeof(buffer) or strlen(buffer) + 1() null terminator
       write(server_socket, buffer, sizeof(buffer));
 
       // quit if read() returns 0 bytes (socket closed)
       int bytes_read = read(server_socket, buffer, sizeof(buffer));
 
       if (bytes_read == 0) {
-          printf("\nServer closed connection.\n");
-          break;
+          printf("\nMsg empty?\n");
       }
 
       printf("received: '%s'\n", buffer);
@@ -27,7 +26,6 @@ void clientLogic(int server_socket){
 
   printf("Client closed\n");
 }
-
 int main() {
     int server_socket;
     struct sockaddr_in server_addr;
@@ -45,8 +43,19 @@ int main() {
     if (connect(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
         perror("Connection failed");
         return 1;
-
     }
+
+    printf("Connected! Type messages below:\n");
+    while (1) {
+        printf("> ");
+        fgets(my_msg.text, sizeof(my_msg.text), stdin);
+        write(server_socket, &my_msg, sizeof(struct message));
+    }
+
+    close(server_socket);
+    return 0;
 }
+
+
 
 
