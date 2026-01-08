@@ -20,7 +20,7 @@ void clientLogic(int server_socket){
       if (bytes_read == 0) {
           printf("\nServer closed connection.\n");
           break;
-      }s
+      }
 
       printf("received: '%s'\n", buffer);
   }
