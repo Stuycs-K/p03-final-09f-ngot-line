@@ -9,6 +9,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <netdb.h>
+#include <sys/stat.h>
+#include <signal.h>
 
 #define PORT 9001
 #define BUFFER_SIZE 1024

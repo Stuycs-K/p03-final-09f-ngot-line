@@ -20,7 +20,7 @@ void clientLogic(int server_socket){
       if (bytes_read == 0) {
           printf("\nServer closed connection.\n");
           break;
-      }
+      }s
 
       printf("received: '%s'\n", buffer);
   }
@@ -32,4 +32,21 @@ int main() {
     int server_socket;
     struct sockaddr_in server_addr;
     struct message my_msg;
+
+    printf("Enter username: ");
+    fgets(my_msg.username, sizeof(my_msg.username), stdin);
+    my_msg.username[strcspn(my_msg.username, "\n")] = 0; // Remove newline
+
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    inet_aton("127.0.0.1", &server_addr.sin_addr);
+
+    if (connect(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+        perror("Connection failed");
+        return 1;
+
+    }
 }
+
+
