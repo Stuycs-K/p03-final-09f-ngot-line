@@ -1,4 +1,4 @@
-#include "network.h"
+#include "networking.h"
 
 int client_tcp_handshake(char * server_address) {
     struct addrinfo hints, *results;
