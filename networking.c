@@ -30,3 +30,37 @@ int client_tcp_handshake(char * server_address) {
 
     return server_socket;
 }
+int server_setup() {
+  //setup structs for getaddrinfo
+  struct addrinfo hints, *results;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;       // ipv4
+  hints.ai_socktype = SOCK_STREAM; // tcp
+  hints.ai_flags = AI_PASSIVE;     // local IP
+
+  int status = getaddrinfo(NULL, PORT, &hints, &results);
+  err(status, "getaddrinfo error");
+
+  int listen_socket = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+  err(listen_socket, "socket error");
+
+  int yes = 1;
+  setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
+  int b = bind(listen_socket, results->ai_addr, results->ai_addrlen);
+  err(b, "bind error");
+
+  int l = listen(listen_socket, 10);
+  err(l, "listen error");
+
+  freeaddrinfo(results);
+  return listen_socket;
+
+}
+
+void err(int i, char*message){
+  if(i < 0){
+	  printf("Error: %s - %s\n",message, strerror(errno));
+  	exit(1);
+  }
+}
