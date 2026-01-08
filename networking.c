@@ -1,12 +1,14 @@
+#include "network.h"
+
 int client_tcp_handshake(char * server_address) {
     struct addrinfo hints, *results;
-    
+
     //hints for getaddrinfo
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;       // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP
 
-  
+
     // PORT is defined in networking.h
     int status = getaddrinfo(server_address, PORT, &hints, &results);
     if (status != 0) {
@@ -23,7 +25,7 @@ int client_tcp_handshake(char * server_address) {
     int c = connect(server_socket, results->ai_addr, results->ai_addrlen);
     err(c, "connect error");
 
-    
+
     freeaddrinfo(results);
 
     return server_socket;
