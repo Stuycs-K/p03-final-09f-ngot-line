@@ -17,5 +17,7 @@ struct message {
     char username[32];
     char text[BUFFER_SIZE];
 };
+int client_tcp_handshake(char * server_address);
 
 #endif
+
