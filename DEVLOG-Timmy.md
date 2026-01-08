@@ -13,7 +13,7 @@ server.c (25 min)
 
 ### 2025-01-07 - Brief description
 Fixing branch bugs, (10 mins)
-
+Worked on client.c and making the hs in networking.c as well as added to network.h (60min)
 
 ### 2024-01-03 - Brief description
 Expanded description including how much time was spent on task.
