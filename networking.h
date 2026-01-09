@@ -13,9 +13,14 @@
 #include <netdb.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <netdb.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
+#define MAX_CLIENTS 100
 #define PORT 9001
 #define BUFFER_SIZE 1024
+#define SHM_KEY 12345
 
 struct message {
     char username[32];

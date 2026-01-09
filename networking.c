@@ -9,7 +9,7 @@ int client_tcp_handshake(char * server_address) {
     hints.ai_socktype = SOCK_STREAM; // TCP
 
 
-    // PORT is defined in networking.h
+      // PORT is defined in networking.h
     int status = getaddrinfo(server_address, PORT, &hints, &results);
     if (status != 0) {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
@@ -63,4 +63,55 @@ void err(int i, char*message){
 	  printf("Error: %s - %s\n",message, strerror(errno));
   	exit(1);
   }
+}
+
+
+int main() {
+    //stored an array of ints (the socket IDs)
+    int shmid = shmget(SHM_KEY, sizeof(int) * MAX_CLIENTS, IPC_CREAT | 0644);
+    int *client_sockets = shmat(shmid, NULL, 0);
+
+    // Initialize all slots to -1 (empty)
+    for(int i=0; i<MAX_CLIENTS; i++) client_sockets[i] = -1;
+
+    int listen_socket = server_setup();
+
+    while (1) {
+        int client_socket = server_tcp_handshake(listen_socket);
+
+        // Find an empty spot in shared memory and save this socket
+        int slot = -1;
+        for(int i=0; i<MAX_CLIENTS; i++) {
+            if (client_sockets[i] == -1) {
+                client_sockets[i] = client_socket;
+                slot = i;
+                break;
+            }
+        }
+
+        if (fork() == 0) {
+            // CHILD PROCESS
+            close(listen_socket);
+            struct message msg;
+
+            while (read(client_socket, &msg, sizeof(struct message)) > 0) {
+                // BROADCAST LOGIC
+                for (int i = 0; i < MAX_CLIENTS; i++) {
+                    int target_socket = client_sockets[i];
+
+                    // The "IF" statement that answers your question:
+                    // 1. Check if the slot is active (!= -1)
+                    // 2. Check if the target is NOT the current sender
+                    if (target_socket != -1 && target_socket != client_socket) {
+                        write(target_socket, &msg, sizeof(struct message));
+                    }
+                }
+            }
+
+            // Cleanup on disconnect
+            client_sockets[slot] = -1;
+            close(client_socket);
+            exit(0);
+        }
+    }
 }

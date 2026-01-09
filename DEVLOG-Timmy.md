@@ -15,5 +15,15 @@ server.c (25 min)
 Fixing branch bugs, (10 mins)
 Worked on client.c and making the hs in networking.c as well as added to network.h (60min)
 
+
+### 2025-01-08 - Brief description
+Fixing branch bugs, (10 mins)
+Worked on client.c and making the hs in networking.c as well as added to network.h (60min)
+
+
+### 2025-01-09 - Brief description
+Tried to make global broadcasting messaging. Created a saved struct for users and msg. (45 min)
+#goals text-color and gui.
+
 ### 2024-01-03 - Brief description
 Expanded description including how much time was spent on task.
