@@ -1,61 +1,47 @@
 #include "networking.h"
 
-
-void clientLogic(int server_socket){
-  char buffer[BUFFER_SIZE];
-
-  // quit if fgets() returns null (ctrl-d or eof)
-  while (printf("Enter a message: "), fgets(buffer, sizeof(buffer), stdin)) {
-
-      char *p = strchr(buffer, '\n');
-      if (p) *p = 0;
-
-      // Send the msg to the server
-      // We use sizeof(buffer) or strlen(buffer) + 1() null terminator
-      write(server_socket, buffer, sizeof(buffer));
-
-      // quit if read() returns 0 bytes (socket closed)
-      int bytes_read = read(server_socket, buffer, sizeof(buffer));
-
-      if (bytes_read == 0) {
-          printf("\nMsg empty?\n");
-      }
-
-      printf("received: '%s'\n", buffer);
-  }
-
-  printf("Client closed\n");
-}
-int main() {
+//when client is connected this is the logic that handles their actions
+int main(int argc, char *argv[]) {
     int server_socket;
-    struct sockaddr_in server_addr;
     struct message my_msg;
+    char *server_ip = "127.0.0.1";
+
+    //allows one computer to setup server and another computer to connect to it.
+    if (argc > 1) server_ip = argv[1];
 
     printf("Enter username: ");
     fgets(my_msg.username, sizeof(my_msg.username), stdin);
-    my_msg.username[strcspn(my_msg.username, "\n")] = 0; // Remove newline
+    my_msg.username[strcspn(my_msg.username, "\n")] = 0;
 
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    inet_aton("127.0.0.1", &server_addr.sin_addr);
-
-    if (connect(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-        perror("Connection failed");
-        return 1;
-    }
+    //client connects
+    server_socket = client_tcp_handshake(server_ip);
 
     printf("Connected! Type messages below:\n");
-    while (1) {
-        printf("> ");
-        fgets(my_msg.text, sizeof(my_msg.text), stdin);
-        write(server_socket, &my_msg, sizeof(struct message));
+
+    //forks the client so client can chat and receive msgs same time
+    int f = fork();
+
+    if (f == 0) {
+        // CHILD PROCESS: Always listening for incoming messages
+        struct message incoming;
+        while (read(server_socket, &incoming, sizeof(struct message)) > 0) {
+            // \r clears the current line so the prompt stays clean
+            printf("\r[%s]: %s> ", incoming.username, incoming.text);
+            fflush(stdout);
+        }
+        printf("\n[Client] Server disconnected.\n");
+        exit(0);
+    }
+    else {
+        // PARENT PROCESS: Always waiting for user to type
+        while (1) {
+            printf("> ");
+            if (fgets(my_msg.text, sizeof(my_msg.text), stdin) == NULL) break;
+
+            write(server_socket, &my_msg, sizeof(struct message));
+        }
     }
 
     close(server_socket);
     return 0;
 }
-
-
-
-
