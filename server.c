@@ -1,7 +1,5 @@
 #include "networking.h"
 
-int global_shmid;
-int *client_pids; // store pid of clients
 //shuts down server, deletes the shared memory from the OS
 void exit_handler(int sig) {
   printf("\n[Server] Shutting down. Cleaning up processes and memory...\n");
