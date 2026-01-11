@@ -19,7 +19,7 @@
 #include <sys/wait.h>
 
 #define MAX_CLIENTS 100
-#define PORT 9001
+#define PORT "9001"
 #define BUFFER_SIZE 1024
 #define SHM_KEY 12345
 
@@ -32,9 +32,8 @@ struct client_info {
     int socket;
     int pid;
 };
-
-int global_shmid;
-struct client_info *chatroom_data;
+extern int global_shmid;
+extern struct client_info *chatroom_data;
 
 int client_tcp_handshake(char * server_address);
 int server_setup();

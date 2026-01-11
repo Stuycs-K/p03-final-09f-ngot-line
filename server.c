@@ -1,5 +1,7 @@
 #include "networking.h"
 
+int global_shmid;
+struct client_info *chatroom_data;; // store pid of clients
 //shuts down server, deletes the shared memory from the OS
 void exit_handler(int sig) {
   printf("\n[Server] Shutting down. Cleaning up processes and memory...\n");
