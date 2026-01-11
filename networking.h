@@ -16,6 +16,7 @@
 #include <netdb.h>
 #include <sys/shm.h>
 #include <sys/ipc.h>
+#include <sys/wait.h>
 
 #define MAX_CLIENTS 100
 #define PORT 9001
@@ -27,6 +28,8 @@ struct message {
     char text[BUFFER_SIZE];
 };
 int client_tcp_handshake(char * server_address);
+int server_setup();
+int server_tcp_handshake(int listen_socket);
+void err(int i, char* message);
 
 #endif
-
