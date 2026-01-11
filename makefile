@@ -1,5 +1,10 @@
 CC = gcc
 CFLAGS = -Wall
+
+
+#uses shell to get port from networking.h
+PORT = $(shell grep "#define PORT" networking.h | cut -d '"' -f 2)
+
 .PHONY: compile clean run_server run_client
 all: compile
 
@@ -14,19 +19,24 @@ client: client.o networking.o
 server.o: server.c networking.h
 	$(CC) $(CFLAGS) -c server.c
 
-run_server: server
-	@echo "Starting Server..."
-	./server
-
-run_client: client
-	@echo "Starting Client..."
-	./client 127.0.0.1
-
 client.o: client.c networking.h
 	$(CC) $(CFLAGS) -c client.c
 
 networking.o: networking.c networking.h
 	$(CC) $(CFLAGS) -c networking.c
 
+#run cmds
+run_server: server
+	@echo "Starting Server on Port $(PORT)....."
+	./server
+
+run_client: client
+	@echo "Starting Client (connecting to localhost)..."
+	./client 127.0.0.1
+
+#cleanup
 clean:
+	@echo "Cleaning up files and IPC resources..."
 	rm -f *.o server client
+	# remove shared memory
+	-ipcrm -M $(SHM_KEY) 2>/dev/null || true
