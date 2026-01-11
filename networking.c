@@ -1,5 +1,13 @@
 #include "networking.h"
 
+void err(int i, char*message){
+  if(i < 0){
+	  printf("Error: %s - %s\n",message, strerror(errno));
+  	exit(1);
+  }
+}
+
+//connects to server and returns the socket
 int client_tcp_handshake(char * server_address) {
     struct addrinfo hints, *results;
 
@@ -30,13 +38,23 @@ int client_tcp_handshake(char * server_address) {
 
     return server_socket;
 }
+
+// accepts a connection and returns the new client socket
+int server_tcp_handshake(int listen_socket) {
+    int client_socket = accept(listen_socket, NULL, NULL);
+    err(client_socket, "accept error");
+    return client_socket;
+}
+
+
+
 int server_setup() {
   //setup structs for getaddrinfo
   struct addrinfo hints, *results;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;       // ipv4
   hints.ai_socktype = SOCK_STREAM; // tcp
-  hints.ai_flags = AI_PASSIVE;     // local IP
+  hints.ai_flags = AI_PASSIVE;     // so we use the local IP
 
   int status = getaddrinfo(NULL, PORT, &hints, &results);
   err(status, "getaddrinfo error");
@@ -56,13 +74,6 @@ int server_setup() {
   freeaddrinfo(results);
   return listen_socket;
 
-}
-
-void err(int i, char*message){
-  if(i < 0){
-	  printf("Error: %s - %s\n",message, strerror(errno));
-  	exit(1);
-  }
 }
 
 
@@ -99,9 +110,8 @@ int main() {
                 for (int i = 0; i < MAX_CLIENTS; i++) {
                     int target_socket = client_sockets[i];
 
-                    // The "IF" statement that answers your question:
-                    // 1. Check if the slot is active (!= -1)
-                    // 2. Check if the target is NOT the current sender
+                    // first check if the slot is taken (!= -1)
+                    // second check if the target is NOT the current sender
                     if (target_socket != -1 && target_socket != client_socket) {
                         write(target_socket, &msg, sizeof(struct message));
                     }
