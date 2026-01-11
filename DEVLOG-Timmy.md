@@ -25,5 +25,9 @@ Worked on client.c and making the hs in networking.c as well as added to network
 Tried to make global broadcasting messaging. Created a saved struct for users and msg. (45 min)
 #goals text-color and gui.
 
+### 2025-01-011 - Brief description
+Modified makefile to clean up processes, edited network.c, client.c fork so client can send and receive msg same time, server.c to broadcast msgs to everyone but client, fixed cleanup issues (70min)
+#goals text-color and gui, cmds
+
 ### 2024-01-03 - Brief description
 Expanded description including how much time was spent on task.

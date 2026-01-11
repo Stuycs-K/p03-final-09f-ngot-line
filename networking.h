@@ -27,6 +27,15 @@ struct message {
     char username[32];
     char text[BUFFER_SIZE];
 };
+
+struct client_info {
+    int socket;
+    int pid;
+}
+
+int global_shmid;
+struct client_info *chatroom_data;
+
 int client_tcp_handshake(char * server_address);
 int server_setup();
 int server_tcp_handshake(int listen_socket);

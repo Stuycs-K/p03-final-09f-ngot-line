@@ -39,4 +39,5 @@ clean:
 	@echo "Cleaning up files and IPC resources..."
 	rm -f *.o server client
 	# remove shared memory
-	-ipcrm -M $(SHM_KEY) 2>/dev/null || true
+	-ipcrm -M $(SHM_KEY)
+	-pkill -9 server
