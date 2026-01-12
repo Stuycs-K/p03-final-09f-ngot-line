@@ -48,57 +48,75 @@ int main() {
     for(int i = 0; i < MAX_CLIENTS; i++) {
         chatroom_data[i].socket = -1;
         chatroom_data[i].pid = -1;
+        printf("Client: %d Updated", i);
     }
 
     int listen_socket = server_setup();
     printf("[server] Multi-user server started on port %s...\n", PORT);
 
+    int yes = 1;
+    if ( setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1 ) {
+        printf("sockopt  error\n");
+        printf("%s\n",strerror(errno));
+        exit(-1);
+    }
+    int err = bind(listen_socket, results->ai_addr, results->ai_addrlen);
+    if(err == -1){
+        printf("Error binding: %s",strerror(errno));
+        exit(1);
+    }
+    listen(listen_socket, MAX_CLIENTS);//3 clients can wait to be processed
+
+    printf("Listening on port %s\n",PORT);
     //server listens for clients to accept
-    while (1) {
-        int client_socket = server_tcp_handshake(listen_socket);
-        //finds empty slot
-        int slot = -1;
-        for(int i = 0; i < MAX_CLIENTS; i++) {
-            if (chatroom_data[i].socket == -1) {
-                slot = i;
-                break;
-            }
+
+
+    socklen_t sock_size;
+    struct sockaddr_storage client_address;
+    sock_size = sizeof(client_address);
+
+    fd_set read_fds;
+
+    char buff[1025]="";
+
+      while(1){
+
+        FD_ZERO(&read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+        FD_SET(listen_socket,&read_fds);
+        int i = select(listen_socket+1, &read_fds, NULL, NULL, NULL);
+
+        //if standard in, use fgets
+        if (FD_ISSET(STDIN_FILENO, &read_fds)) {
+            fgets(buff, sizeof(buff), stdin);
+            buff[strlen(buff)-1]=0;
+            printf("Recieved from terminal: '%s'\n",buff);
         }
 
-        int f = fork();
-        if (f == 0) { // --- CHILD PROCESS ---
-            close(listen_socket);
-            struct message incoming;
+        // if socket
+        if (FD_ISSET(listen_socket, &read_fds)) {
+            //accept the connection
+            int client_socket = accept(listen_socket,(struct sockaddr *)&client_address, &sock_size);
+            printf("Connected, waiting for data.\n");
 
-            // child records own processes fro broadcasting
-            chatroom_data[slot].socket = client_socket;
-
-            while (read(client_socket, &incoming, sizeof(struct message)) > 0) {
-                printf("[%s]: %s", incoming.username, incoming.text);
-                printf("heyy!!");
-
-                // broadcast to everyone else
-                for (int i = 0; i < MAX_CLIENTS; i++) {
-                    int target_fd = chatroom_data[i].socket;
-                    if (target_fd != -1 ) {
-                        printf("broadcasting!!");
-                        write(target_fd, &incoming, sizeof(struct message));
-                    }
-                }
+            //read the whole buff
+            read(client_socket,buff, sizeof(buff));
+            //trim the string
+            buff[strlen(buff)-1]=0; //clear newline
+            if(buff[strlen(buff)-1]==13){
+                //clear windows line ending
+                buff[strlen(buff)-1]=0;
             }
 
-            // Client disconnected: cleanup this slot
-            printf("[server] Client disconnected.\n");
-            chatroom_data[slot].socket = -1;
-            chatroom_data[slot].pid = -1;
-            close(client_socket);
-            exit(0);
-
-        } else { // --- PARENT PROCESS ---
-            // parent records pid so it can kill this child later
-            chatroom_data[slot].pid = f;
+            printf("\nRecieved from client '%s'\n",buff);
             close(client_socket);
         }
     }
+
+
+
+    free(hints);
+    freeaddrinfo(results);
     return 0;
+
 }

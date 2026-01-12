@@ -31,6 +31,7 @@ struct message {
 struct client_info {
     int socket;
     int pid;
+    fd_set desciptors;
 };
 extern int global_shmid;
 extern struct client_info *chatroom_data;
