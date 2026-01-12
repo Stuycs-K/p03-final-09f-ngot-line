@@ -75,11 +75,13 @@ int main() {
 
             while (read(client_socket, &incoming, sizeof(struct message)) > 0) {
                 printf("[%s]: %s", incoming.username, incoming.text);
+                printf("heyy!!");
 
                 // broadcast to everyone else
                 for (int i = 0; i < MAX_CLIENTS; i++) {
                     int target_fd = chatroom_data[i].socket;
-                    if (target_fd != -1 && target_fd != client_socket) {
+                    if (target_fd != -1 ) {
+                        printf("broadcasting!!");
                         write(target_fd, &incoming, sizeof(struct message));
                     }
                 }
