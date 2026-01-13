@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         struct message incoming;
         while (read(server_socket, &incoming, sizeof(struct message)) > 0) {
             // \r clears the current line so the prompt stays clean
-            printf("\r[%s]: %s> ", incoming.username, incoming.text);
+            printf("\r%s: %s", incoming.username, incoming.text);
             fflush(stdout);
         }
         printf("\n[Client] Server disconnected.\n");

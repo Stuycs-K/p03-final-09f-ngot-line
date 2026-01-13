@@ -27,13 +27,11 @@ struct message {
     char username[32];
     char text[BUFFER_SIZE];
 };
-
-struct client_info {
+struct client {
     int socket;
-    int pid;
-    fd_set desciptors;
+    char *color;
 };
-int client_tcp_handshake(char * server_address);
+extern int client_tcp_handshake(char * server_address);
 int server_setup();
 int server_tcp_handshake(int listen_socket);
 void err(int i, char* message);
