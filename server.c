@@ -92,7 +92,8 @@ int main() {
 
                       //wraps the username in color
                       char colored_name[128];
-                      sprintf(colored_name, "%s%s%s", chatroom[i].color, msg.username, CLR_RESET);
+                      //color + bracket + clr_reset + username + color + bracket + clr_reset
+                      sprintf(colored_name, "%s[%s%s%s]%s", chatroom[i].color, CLR_RESET,  msg.username, chatroom[i].color, CLR_RESET);
                       strncpy(msg.username, colored_name, sizeof(msg.username) - 1);
 
                       // broadcasting
