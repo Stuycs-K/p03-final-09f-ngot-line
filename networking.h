@@ -31,6 +31,7 @@ struct message {
 struct client_info {
     int socket;
     int pid;
+    fd_set desciptors;
 };
 int client_tcp_handshake(char * server_address);
 int server_setup();
