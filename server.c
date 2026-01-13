@@ -1,101 +1,95 @@
 #include "networking.h"
 
-int global_shmid;
-struct client_info *chatroom_data;; // store pid of clients
-//shuts down server, deletes the shared memory from the OS
+#define CLR_RESET  "\x1b[0m"
+#define CLR_RED    "\x1b[31m"
+#define CLR_GREEN  "\x1b[32m"
+#define CLR_YELLOW "\x1b[33m"
+#define CLR_BLUE   "\x1b[34m"
+#define CLR_MAGENTA "\x1b[35m"
+#define CLR_CYAN   "\x1b[36m"
+
+char *colors[] = {CLR_RED, CLR_GREEN, CLR_YELLOW, CLR_BLUE, CLR_MAGENTA, CLR_CYAN};
+
 void exit_handler(int sig) {
-  printf("\n[Server] Shutting down. Cleaning up processes and memory...\n");
-    //kills all active child processes
+    printf("\n[Server] Shutting down. Closing all sockets...\n");
+    // Just close the sockets in your array
     for (int i = 0; i < MAX_CLIENTS; i++) {
-      if (chatroom_data[i].pid > 0) {
-          printf("[Server] Killing child process %d\n", chatroom_data[i].pid);
-          kill(chatroom_data[i].pid, SIGTERM);
-      }
+        if (chatroom[i].socket != -1) {
+            close(chatroom[i].socket);
+        }
     }
-
-    // removes the SM segment from the OS
-    shmctl(global_shmid, IPC_RMID, NULL);
-
-    printf("[Server] Cleanup complete. until next time :D !\n");
+    printf("[Server] Cleanup complete. see you next time :) !\n");
     exit(0);
 }
 
-//handle zomb-processes
-void sighandler(int sig) {
-    if (sig == SIGCHLD) {
-        while (waitpid(-1, NULL, WNOHANG) > 0);
-    }
-}
-
-
 int main() {
-
-  //Tell the OS: "If someone hits Ctrl+C (SIGINT), run my exit_handler"
-  signal(SIGINT, exit_handler);
-  signal(SIGCHLD, sighandler); //trying to fix z-processes issue
-
-    // setups Shared Memory for the socket table
-    // This allows children to see everyone's socket ID for broadcasting
-    int shmid = shmget(SHM_KEY, sizeof(struct client_info) * MAX_CLIENTS, IPC_CREAT | 0644);
-    if (shmid == -1) {
-        perror("shmget");
-        exit(1);
-    }
-    global_shmid = shmid;
-    chatroom_data = shmat(shmid, NULL, 0);
-
-    // Initialize all slots
-    for(int i = 0; i < MAX_CLIENTS; i++) {
-        chatroom_data[i].socket = -1;
-        chatroom_data[i].pid = -1;
-    }
-
     int listen_socket = server_setup();
-    printf("[server] Multi-user server started on port %s...\n", PORT);
+    printf("[server] Multi-user server started  on port %s...\n", PORT);
 
-    //server listens for clients to accept
+    // array of all connected client sockets
+    int client_sockets[MAX_CLIENTS];
+    for (int i = 0; i < MAX_CLIENTS; i++) client_sockets[i] = -1;
+
+    fd_set read_fds;
+    char buffer[sizeof(struct message)];
+
     while (1) {
-        int client_socket = server_tcp_handshake(listen_socket);
-        //finds empty slot
-        int slot = -1;
-        for(int i = 0; i < MAX_CLIENTS; i++) {
-            if (chatroom_data[i].socket == -1) {
-                slot = i;
-                break;
+        // Clear and setup the fd_set
+        FD_ZERO(&read_fds);
+        FD_SET(listen_socket, &read_fds); // adding the listener
+        int max_fd = listen_socket;
+
+        // add all active clients to the set
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (client_sockets[i] != -1) {
+                FD_SET(client_sockets[i], &read_fds);
+                if (client_sockets[i] > max_fd) max_fd = client_sockets[i];
             }
         }
 
-        int f = fork();
-        if (f == 0) { // --- CHILD PROCESS ---
-            close(listen_socket);
-            struct message incoming;
+        //waiting for activity
+        int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+        if (activity < 0) {
+            perror("select error");
+            continue;
+        }
 
-            // child records own processes fro broadcasting
-            chatroom_data[slot].socket = client_socket;
+        //checks for new connections
+        if (FD_ISSET(listen_socket, &read_fds)) {
+            int new_socket = server_tcp_handshake(listen_socket);
 
-            while (read(client_socket, &incoming, sizeof(struct message)) > 0) {
-                printf("[%s]: %s", incoming.username, incoming.text);
+            // adds new socket to the array
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+                if (client_sockets[i] == -1) {
+                    client_sockets[i] = new_socket;
+                    printf("[server] Added new client to slot %d (Socket %d)\n", i, new_socket);
+                    break;
+                }
+            }
+        }
 
-                // broadcast to everyone else
-                for (int i = 0; i < MAX_CLIENTS; i++) {
-                    int target_fd = chatroom_data[i].socket;
-                    if (target_fd != -1 && target_fd != client_socket) {
-                        write(target_fd, &incoming, sizeof(struct message));
+        // check all clients for msgs
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            int curr_fd = client_sockets[i];
+            if (curr_fd != -1 && FD_ISSET(curr_fd, &read_fds)) {
+                struct message msg;
+                int bytes_read = read(curr_fd, &msg, sizeof(struct message));
+
+                if (bytes_read == 0) {
+                    // Client disconnected
+                    printf("[server] Client on socket %d disconnected.\n", curr_fd);
+                    close(curr_fd);
+                    client_sockets[i] = -1;
+                } else {
+                    // broadcasts to everyone else
+                    printf("[%s]: %s", msg.username, msg.text);
+                    for (int j = 0; j < MAX_CLIENTS; j++) {
+                        if (client_sockets[j] != -1 != curr_fd) {
+                            write(client_sockets[j], &msg, sizeof(struct message));
+                        }
                     }
                 }
             }
-
-            // Client disconnected: cleanup this slot
-            printf("[server] Client disconnected.\n");
-            chatroom_data[slot].socket = -1;
-            chatroom_data[slot].pid = -1;
-            close(client_socket);
-            exit(0);
-
-        } else { // --- PARENT PROCESS ---
-            // parent records pid so it can kill this child later
-            chatroom_data[slot].pid = f;
-            close(client_socket);
         }
     }
     return 0;

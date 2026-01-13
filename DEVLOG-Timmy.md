@@ -29,5 +29,9 @@ Tried to make global broadcasting messaging. Created a saved struct for users an
 Modified makefile to clean up processes, edited network.c, client.c fork so client can send and receive msg same time, server.c to broadcast msgs to everyone but client, fixed cleanup issues (70min)
 #goals text-color and gui, cmds, user should be able to see their own msg.
 
+### 2025-01-012 - Brief description
+removed forking from server.c to implement array of sockets using select, allowing evreyone to see the broadcasts messages without the repeated socket error.(70min)
+#goals text-color and gui, cmds, 
+
 ### 2024-01-03 - Brief description
 Expanded description including how much time was spent on task.

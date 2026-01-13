@@ -42,7 +42,10 @@ int client_tcp_handshake(char * server_address) {
 // accepts a connection and returns the new client socket
 int server_tcp_handshake(int listen_socket) {
     int client_socket = accept(listen_socket, NULL, NULL);
-    err(client_socket, "accept error");
+    if (client_socket < 0) {
+        perror("accept error");
+        return -1;
+    }
     return client_socket;
 }
 

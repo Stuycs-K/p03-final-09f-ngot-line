@@ -32,9 +32,6 @@ struct client_info {
     int socket;
     int pid;
 };
-extern int global_shmid;
-extern struct client_info *chatroom_data;
-
 int client_tcp_handshake(char * server_address);
 int server_setup();
 int server_tcp_handshake(int listen_socket);
